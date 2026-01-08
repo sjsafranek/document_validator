@@ -6,6 +6,12 @@ import pytesseract
 from pytesseract import Output
 
 
+def normalizeText(text):
+    characters = [char.lower() for char in text if char.isalnum()]
+    normalized = "".join(characters)
+    return normalized
+
+
 def readPdfPages(infile: str) -> pypdfium2._helpers.page.PdfPage:
     pdf = pypdfium2.PdfDocument(infile)
     for page in pdf:
@@ -17,7 +23,7 @@ def readPdfPagesAsImage(infile: str) -> PIL.Image.Image:
         yield page.render(scale=2).to_pil()
 
 
-def readPdfPagesAsNumpyArray(infile: str) -> numpy.array:
+def readPdfPagesAsArray(infile: str) -> numpy.array:
     for page in readPdfPages(infile):
         yield page.render(scale=2).to_numpy()
 
