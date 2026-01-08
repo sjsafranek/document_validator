@@ -22,6 +22,7 @@ def display(image, data):
 
 
 for image in lib.readPdfPages(infile):
-    data = lib.parseImage(image, clean=True)
+    image = lib.cleanImage(image)
+    data = lib.parseImage(image)
     display(image, data)
     break
