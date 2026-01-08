@@ -21,7 +21,7 @@ def display(image, data):
 
 
 
-for image in lib.readPdfPages(infile):
+for image in lib.readPdfPagesAsArray(infile):
     # image = lib.cleanImage(image)
     data = lib.parseImage(image)
     display(image, data)

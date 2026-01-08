@@ -6,20 +6,27 @@ import pytesseract
 from pytesseract import Output
 
 
-def readPdfPages(infile):
+def readPdfPages(infile: str) -> pypdfium2._helpers.page.PdfPage:
     pdf = pypdfium2.PdfDocument(infile)
-    pages = [pdf[i] for i in range(len(pdf))]
-    # images = [page.render(scale=2).to_pil() for page in pages]
-    # return [image2array(image) for image in images]
-    images = [page.render(scale=2).to_numpy() for page in pages]
-    return images
+    for page in pdf:
+        yield page
 
 
-def image2array(image):
+def readPdfPagesAsImage(infile: str) -> PIL.Image.Image:
+    for page in readPdfPages(infile):
+        yield page.render(scale=2).to_pil()
+
+
+def readPdfPagesAsNumpyArray(infile: str) -> numpy.array:
+    for page in readPdfPages(infile):
+        yield page.render(scale=2).to_numpy()
+
+
+def image2array(image: PIL.Image.Image) -> numpy.array:
     return numpy.array(image)
 
 
-def cleanImage(image):
+def cleanImage(image: numpy.array):
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
@@ -44,7 +51,7 @@ def cleanImage(image):
     return sharpened_image_kernel
 
 
-def parseImage(image, config='--psm 3 -l eng', tesseract_cmd=r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
+def parseImage(image: numpy.array, config='--psm 3 -l eng', tesseract_cmd=r'C:\Program Files\Tesseract-OCR\tesseract.exe'):
     pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
     data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT, config=config)
     return data
