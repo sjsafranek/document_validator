@@ -179,6 +179,7 @@ class Datasource(object):
             words = [word for word in self.words.values() if word.id != source.id]
             for target in getNeighbors(source, words):
                 distance = source.centroid.distance(target.centroid)
+                print(source, target, distance)
                 self.graph.add_edge(source.id, target.id, weight=distance)
 
     def findShortestPath(self, start: str, end: str):
