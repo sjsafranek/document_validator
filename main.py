@@ -1,5 +1,6 @@
 import cv2
 import shapely
+from shapely.geometry import Point
 from shapely.geometry import LineString
 import networkx
 
@@ -27,53 +28,102 @@ def display(image, data):
 
 
 
+def getIntersections(line, words):
+    for word in words:
+        if line.intersects(word.bbox):
+            yield word
+
+
 def getNeighbors(source, words):
     # remove source word
     words = [word for word in words if word.id != source.id]
 
+    xs = [word.centroid.x for word in words]
+    ys = [word.centroid.y for word in words]
+    minx = min(xs)
+    miny = min(ys)
+    maxx = max(xs)
+    maxy = max(ys)
+
     # TOP
-    options = []
-    for target in words:
-        bounds = target.bbox.bounds
-        if source.centroid.x >= bounds[0] and source.centroid.x <= bounds[2]:
-            if (source.centroid.y <= target.centroid.y):
-                options.append(target)
+    line = LineString([source.centroid, Point(source.centroid.x, maxy)])
+    options = [word for word in getIntersections(line, words)]
     if 0 != len(options):
-        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))    
+        # print(1, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
         yield ordered[0]
+
+    # # TOP
+    # options = []
+    # for target in words:
+    #     bounds = target.bbox.bounds
+    #     if source.centroid.x >= bounds[0] and source.centroid.x <= bounds[2]:
+    #         if (source.centroid.y <= target.centroid.y):
+    #             options.append(target)
+    # if 0 != len(options):
+    #     ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+    #     # print(2, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
+    #     yield ordered[0]
 
     # BOTTOM
-    options = []
-    for target in words:
-        bounds = target.bbox.bounds
-        if source.centroid.x >= bounds[0] and source.centroid.x <= bounds[2]:
-            if (source.centroid.y >= target.centroid.y):
-                options.append(target)
+    line = LineString([source.centroid, Point(source.centroid.x, miny)])
+    options = [word for word in getIntersections(line, words)]
     if 0 != len(options):
-        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))    
+        # print(1, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
         yield ordered[0]
 
+    # # BOTTOM
+    # options = []
+    # for target in words:
+    #     bounds = target.bbox.bounds
+    #     if source.centroid.x >= bounds[0] and source.centroid.x <= bounds[2]:
+    #         if (source.centroid.y >= target.centroid.y):
+    #             options.append(target)
+    # if 0 != len(options):
+    #     ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+    #     # print(3, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
+    #     yield ordered[0]
+
     # RIGHT
-    options = []
-    for target in words:
-        bounds = target.bbox.bounds
-        if source.centroid.y >= bounds[1] and source.centroid.y <= bounds[3]:
-            if (source.centroid.x <= target.centroid.x):
-                options.append(target)
+    line = LineString([source.centroid, Point(maxx, source.centroid.y)])
+    options = [word for word in getIntersections(line, words)]
     if 0 != len(options):
-        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))    
+        # print(1, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
         yield ordered[0]
+
+    # # RIGHT
+    # options = []
+    # for target in words:
+    #     bounds = target.bbox.bounds
+    #     if source.centroid.y >= bounds[1] and source.centroid.y <= bounds[3]:
+    #         if (source.centroid.x <= target.centroid.x):
+    #             options.append(target)
+    # if 0 != len(options):
+    #     ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+    #     print(4, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
+    #     yield ordered[0]
     
-    # LEFT 
-    options = []
-    for target in words:
-        bounds = target.bbox.bounds
-        if source.centroid.y >= bounds[0] and source.centroid.y <= bounds[3]:
-            if (source.centroid.x >= target.centroid.x):
-                options.append(target)
+    # LEFT
+    line = LineString([source.centroid, Point(minx, source.centroid.y)])
+    options = [word for word in getIntersections(line, words)]
     if 0 != len(options):
-        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+        ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))    
+        # print(1, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
         yield ordered[0]
+
+    # # LEFT 
+    # options = []
+    # for target in words:
+    #     bounds = target.bbox.bounds
+    #     if source.centroid.y >= bounds[0] and source.centroid.y <= bounds[3]:
+    #         if (source.centroid.x >= target.centroid.x):
+    #             options.append(target)
+    # if 0 != len(options):
+    #     ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
+    #     print(5, ordered[0], shapely.distance(source.centroid, ordered[0].centroid))
+    #     yield ordered[0]
 
 
 
@@ -107,11 +157,18 @@ class Datasource(object):
             if not text:
                 continue
             (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
+            # xmin = x
+            # ymin = y
+            # xmax = x + w
+            # ymax = y + h
             xmin = x
-            ymin = y
+            ymin = y - h
             xmax = x + w
-            ymax = y + h
+            ymax = y        
             bbox = shapely.box(xmin, ymin, xmax, ymax)
+            # print((x, y, w, h))
+            # print(bbox)
+            # input()
 
             self.words[i] = Word(i, text, confidence, bbox)
             if text not in self.occurances:
@@ -122,7 +179,6 @@ class Datasource(object):
             words = [word for word in self.words.values() if word.id != source.id]
             for target in getNeighbors(source, words):
                 distance = source.centroid.distance(target.centroid)
-                # print(source, target, distance)
                 self.graph.add_edge(source.id, target.id, weight=distance)
 
     def findShortestPath(self, start: str, end: str):
@@ -154,7 +210,18 @@ class Datasource(object):
 
 for image in lib.readPdfPagesAsArray(infile):
     data = lib.parseImage(image)
+    print('building datasource')
     datasource = Datasource(data)
+    print('finding path')
+
+    #phrase = 'Magic The Gathering'
+
     path = datasource.findShortestPath("super", "melee")
     print([word.text for word in path[0]])
+    # print(dir(path[0][0].centroid))
+
+    # path = datasource.findShortestPath("Magic", "Gathering")
+    # print([word.text for word in path[0]])
+    # print(dir(path[0][0].centroid))
+    
     break
