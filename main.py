@@ -5,13 +5,12 @@ import shapely
 from shapely.geometry import Point
 from shapely.geometry import LineString
 from shapely.geometry import MultiPolygon
+from shapely.strtree import STRtree
 import networkx
 # from numba import njit
 
 import lib
 from logger import logger
-
-
 infile = 'MagicTheGathering_IsTuringComplete.pdf'
 
 
@@ -31,47 +30,42 @@ def display(image, data):
     cv2.imshow('img', image)
     cv2.waitKey(0)
 
+def getIntersections(line, spatial_index, words_list):
+    """Get words that intersect with the line using spatial index."""
+    # Query spatial index
+    result_indices = spatial_index.query(line)
+    # Use indices to lookup words from words_list
+    return [words_list[int(idx)] for idx in result_indices]
 
-# @njit
-def getIntersections(line, words):
-    return [word for word in words if line.intersects(word.bbox)]
 
-
-
-def getNeighbors(source, words):
-    # remove source word
-    words = [word for word in words if word.id != source.id]
-
-    bounds = MultiPolygon([word.bbox for word in words]).bounds
-    minx = bounds[0]
-    miny = bounds[1]
-    maxx = bounds[2]
-    maxy = bounds[3]
+def getNeighbors(source, spatial_index, words_list, bounds):
+    """Get neighbors using spatial index for efficient intersection queries."""
+    minx, miny, maxx, maxy = bounds
 
     # TOP
     line = LineString([source.centroid, Point(source.centroid.x, maxy)])
-    options = [word for word in getIntersections(line, words)]
+    options = [word for word in getIntersections(line, spatial_index, words_list) if word.id != source.id]
     if 0 != len(options):
         ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
         yield ordered[0]
 
     # BOTTOM
     line = LineString([source.centroid, Point(source.centroid.x, miny)])
-    options = [word for word in getIntersections(line, words)]
+    options = [word for word in getIntersections(line, spatial_index, words_list) if word.id != source.id]
     if 0 != len(options):
         ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
         yield ordered[0]
 
     # RIGHT
     line = LineString([source.centroid, Point(maxx, source.centroid.y)])
-    options = [word for word in getIntersections(line, words)]
+    options = [word for word in getIntersections(line, spatial_index, words_list) if word.id != source.id]
     if 0 != len(options):
         ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
         yield ordered[0]
     
     # LEFT
     line = LineString([source.centroid, Point(minx, source.centroid.y)])
-    options = [word for word in getIntersections(line, words)]
+    options = [word for word in getIntersections(line, spatial_index, words_list) if word.id != source.id]
     if 0 != len(options):
         ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
         yield ordered[0]
@@ -122,9 +116,18 @@ class Datasource(object):
             self.occurances[text].append(i)
 
         logger.debug('building graph')
-        for source in self.words.values():
-            words = [word for word in self.words.values() if word.id != source.id]
-            for target in getNeighbors(source, words):
+        
+        # Create spatial index for efficient intersection queries
+        # Keep words list in same order as bboxes for mapping
+        words_list = list(self.words.values())
+        all_bboxes = [word.bbox for word in words_list]
+        self.spatial_index = STRtree(all_bboxes)
+        
+        # Pre-compute document bounds once
+        bounds = MultiPolygon(all_bboxes).bounds
+        
+        for source in words_list:
+            for target in getNeighbors(source, self.spatial_index, words_list, bounds):
                 distance = source.centroid.distance(target.centroid)
                 self.graph.add_edge(source.id, target.id, weight=distance)
 
@@ -153,24 +156,25 @@ class Datasource(object):
         distance = line.length
         return words, distance
 
-
-for image in lib.readPdfPagesAsArray(infile):
-    logger.debug('reading page')
-    data = lib.parseImage(image)
+if __name__ == '__main__':    
+    for image in lib.readPdfPagesAsArray(infile):
+        logger.debug('reading page')
+        
+        data = lib.parseImage(image)
     
-    logger.debug('building datasource')
-    datasource = Datasource(data)
+        logger.debug('building datasource')
+        datasource = Datasource(data)
     
-    logger.debug('finding path')
+        logger.debug('finding path')
 
-    #phrase = 'Magic The Gathering'
+        #phrase = 'Magic The Gathering'
 
-    path = datasource.findShortestPath("super", "melee")
-    print([word.text for word in path[0]])
-    # print(dir(path[0][0].centroid))
+        path = datasource.findShortestPath("super", "melee")
+        print([word.text for word in path[0]])
+        # print(dir(path[0][0].centroid))
 
-    # path = datasource.findShortestPath("Magic", "Gathering")
-    # print([word.text for word in path[0]])
-    # print(dir(path[0][0].centroid))
-    
-    break
+        # path = datasource.findShortestPath("Magic", "Gathering")
+        # print([word.text for word in path[0]])
+        # print(dir(path[0][0].centroid))
+        
+        break
