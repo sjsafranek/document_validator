@@ -30,12 +30,15 @@ def display(image, data):
     cv2.imshow('img', image)
     cv2.waitKey(0)
 
+
+
 def getIntersections(line, spatial_index, words_list):
     """Get words that intersect with the line using spatial index."""
     # Query spatial index
     result_indices = spatial_index.query(line)
     # Use indices to lookup words from words_list
     return [words_list[int(idx)] for idx in result_indices]
+
 
 
 def getNeighbors(source, spatial_index, words_list, bounds):
@@ -94,7 +97,6 @@ class Datasource(object):
     def __init__(self, data):
         self.words = {}
         self.occurances = {}
-        self.graph = networkx.Graph()
 
         logger.debug('collecting words')
         n_boxes = len(data['level'])
@@ -110,26 +112,35 @@ class Datasource(object):
             ymax = y        
             bbox = shapely.box(xmin, ymin, xmax, ymax)
 
-            self.words[i] = Word(i, text, confidence, bbox)
+            # self.words[i] = Word(i, text, confidence, bbox)
+            word = self._addWord(text, confidence, bbox)
             if text not in self.occurances:
                 self.occurances[text] = []
-            self.occurances[text].append(i)
+            self.occurances[text].append(word.id)
 
-        logger.debug('building graph')
-        
         # Create spatial index for efficient intersection queries
         # Keep words list in same order as bboxes for mapping
+        logger.debug('creating spatial index')
         words_list = list(self.words.values())
         all_bboxes = [word.bbox for word in words_list]
         self.spatial_index = STRtree(all_bboxes)
         
         # Pre-compute document bounds once
-        bounds = MultiPolygon(all_bboxes).bounds
-        
+        logger.debug('computing bounding box')
+        self.bounds = MultiPolygon(all_bboxes).bounds
+
+        # Build weighted graph
+        logger.debug('building weighted graph')
+        self.graph = networkx.Graph()
         for source in words_list:
-            for target in getNeighbors(source, self.spatial_index, words_list, bounds):
+            for target in getNeighbors(source, self.spatial_index, words_list, self.bounds):
                 distance = source.centroid.distance(target.centroid)
                 self.graph.add_edge(source.id, target.id, weight=distance)
+
+    def _addWord(self, text, confidence, bbox):
+        i = len(self.words.values()) + 1
+        self.words[i] = Word(i, text, confidence, bbox)
+        return self.words[i]
 
     def findShortestPath(self, start: str, end: str):
         start = lib.normalizeText(start)
@@ -156,6 +167,8 @@ class Datasource(object):
         distance = line.length
         return words, distance
 
+
+
 if __name__ == '__main__':    
     for image in lib.readPdfPagesAsArray(infile):
         logger.debug('reading page')
@@ -171,10 +184,5 @@ if __name__ == '__main__':
 
         path = datasource.findShortestPath("super", "melee")
         print([word.text for word in path[0]])
-        # print(dir(path[0][0].centroid))
-
-        # path = datasource.findShortestPath("Magic", "Gathering")
-        # print([word.text for word in path[0]])
-        # print(dir(path[0][0].centroid))
         
         break
