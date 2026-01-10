@@ -96,7 +96,7 @@ class Datasource(object):
     
     def __init__(self, data):
         self.words = {}
-        self.occurances = {}
+        self.occurrences = {}
 
         logger.debug('collecting words')
         n_boxes = len(data['level'])
@@ -114,9 +114,9 @@ class Datasource(object):
 
             # self.words[i] = Word(i, text, confidence, bbox)
             word = self._addWord(text, confidence, bbox)
-            if text not in self.occurances:
-                self.occurances[text] = []
-            self.occurances[text].append(word.id)
+            if text not in self.occurrences:
+                self.occurrences[text] = []
+            self.occurrences[text].append(word.id)
 
         # Create spatial index for efficient intersection queries
         # Keep words list in same order as bboxes for mapping
