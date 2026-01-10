@@ -102,9 +102,9 @@ class Datasource(object):
         n_boxes = len(data['level'])
         for i in range(n_boxes):
             text = lib.normalizeText(data['text'][i])
-            confidence = data['conf'][i]
             if not text:
-                continue
+                continue            
+            confidence = data['conf'][i]
             (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
             xmin = x
             ymin = y - h
