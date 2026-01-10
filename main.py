@@ -1,4 +1,5 @@
 # import itertools
+import re
 
 import cv2
 import shapely
@@ -167,6 +168,13 @@ class Datasource(object):
         distance = line.length
         return words, distance
 
+    def getTokensByPattern(self, pattern):
+        for token in self.occurrences:
+            match = re.match(pattern, token)
+            if match:
+                yield token
+
+
 
 
 if __name__ == '__main__':    
@@ -185,6 +193,8 @@ if __name__ == '__main__':
         path = datasource.findShortestPath("super", "melee")
         print([word.text for word in path[0]])
         
-        print(datasource.occurrences.keys())
+        # print(datasource.occurrences.keys())
+
+        print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
 
         break
