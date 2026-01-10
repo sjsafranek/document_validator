@@ -146,14 +146,14 @@ class Datasource(object):
         start = lib.normalizeText(start)
         end = lib.normalizeText(end)
 
-        if start not in self.occurances:
+        if start not in self.occurrences:
             return None
-        if end not in self.occurances:
+        if end not in self.occurrences:
             return None
 
         paths = []
-        for s in self.occurances[start]:
-            for e in self.occurances[end]:
+        for s in self.occurrences[start]:
+            for e in self.occurrences[end]:
                 paths.append(self._findShortestPath(s, e))
         if 0 == len(paths):
             return None
@@ -185,4 +185,6 @@ if __name__ == '__main__':
         path = datasource.findShortestPath("super", "melee")
         print([word.text for word in path[0]])
         
+        print(datasource.occurrences.keys())
+
         break
