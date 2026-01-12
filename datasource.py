@@ -21,7 +21,7 @@ class Datasource(object):
         logger.debug('collecting words')
         n_boxes = len(data['level'])
         for i in range(n_boxes):
-            text = utils.normalizeText(data['text'][i])
+            text = data['text'][i]
             if not text:
                 continue            
             confidence = data['conf'][i]
@@ -32,11 +32,10 @@ class Datasource(object):
             ymax = y        
             bbox = shapely.box(xmin, ymin, xmax, ymax)
 
-            # self.words[i] = Word(i, text, confidence, bbox)
-            word = self._addWord(text, confidence, bbox)
-            if text not in self.occurrences:
-                self.occurrences[text] = []
-            self.occurrences[text].append(word.id)
+            word = self._addToken(text, confidence, bbox)
+            if word.text not in self.occurrences:
+                self.occurrences[word.text] = []
+            self.occurrences[word.text].append(word.id)
 
         # Create spatial index for efficient intersection queries
         # Keep words list in same order as bboxes for mapping
@@ -57,12 +56,18 @@ class Datasource(object):
                 distance = source.centroid.distance(target.centroid)
                 self.graph.add_edge(source.id, target.id, weight=distance)
 
-    def _addWord(self, text, confidence, bbox):
+    def _addToken(self, text, confidence, bbox):
         i = len(self.words.values()) + 1
         self.words[i] = Word(i, text, confidence, bbox)
         return self.words[i]
 
     def findShortestPath(self, start: str, end: str):
+
+        if ' ' in start:
+            raise ValueError('TODO')
+        if ' ' in end:
+            raise ValueError('TODO')
+
         start = utils.normalizeText(start)
         end = utils.normalizeText(end)
 

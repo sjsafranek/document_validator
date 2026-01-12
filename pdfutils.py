@@ -1,5 +1,4 @@
 import PIL
-import PIL.Image
 import numpy
 import pypdfium2
 
