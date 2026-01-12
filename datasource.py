@@ -7,7 +7,7 @@ from shapely.geometry import MultiPolygon
 from shapely.strtree import STRtree
 
 import utils
-import geo
+# import geo
 from word import Word
 from logger import logger
 
@@ -52,7 +52,7 @@ class Datasource(object):
         logger.debug('building weighted graph')
         self.graph = networkx.Graph()
         for source in words_list:
-            for target in geo.getNeighbors(source, self.spatial_index, words_list, self.bounds):
+            for target in utils.getNeighbors(source, self.spatial_index, words_list, self.bounds):
                 distance = source.centroid.distance(target.centroid)
                 self.graph.add_edge(source.id, target.id, weight=distance)
 
