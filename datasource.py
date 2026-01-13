@@ -68,20 +68,19 @@ class Datasource(object):
         if ' ' in end:
             raise ValueError('TODO')
 
-        start = utils.normalizeText(start)
-        end = utils.normalizeText(end)
-
-        if start not in self.occurrences:
-            return None
-        if end not in self.occurrences:
-            return None
+        # start = utils.normalizeText(start)
+        # end = utils.normalizeText(end)
+        # if start not in self.occurrences:
+        #     return None
+        # if end not in self.occurrences:
+        #     return None
 
         paths = []
-        for s in self.occurrences[start]:
-            for e in self.occurrences[end]:
+        for s in self._getTokenOccurances(start):
+            for e in self._getTokenOccurances(end):
                 paths.append(self._findShortestPath(s, e))
         if 0 == len(paths):
-            return None
+            return [], None
         ordered = sorted(paths, key=lambda path: path[1])
         return ordered[0]
 
@@ -101,7 +100,7 @@ class Datasource(object):
     def _getTokenOccurances(self, text):
         token = utils.normalizeText(text)
         if token not in self.occurrences:
-            return None
+            return []
         return self.occurrences[token]
 
     def _getTokensFromText(self, text):

@@ -41,6 +41,9 @@ if __name__ == '__main__':
         path, distance = datasource.search(start="super", end="melee")
         print(distance, [word.text for word in path])
         
+        path, distance = datasource.search(start="be", end="good")
+        print(distance, [word.text for word in path])
+
         phrase = 'Magic The Gathering'
         for path, distance in datasource.search(phrase):
             print(distance, [word.text for word in path])
