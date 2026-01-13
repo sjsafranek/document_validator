@@ -55,38 +55,4 @@ if __name__ == '__main__':
     for result in analyzer.search(phrase, neighbors):
         print(result['page_number'], result['distance'], [word.text for word in result['path']])
 
-
-'''
-    for image in pdfutils.readPdfPagesAsArray(infile):
-        c += 1
-        logger.info(f"PAGE {c}")
-
-        logger.debug('reading page')
-        data = ocr.read(image)
-    
-        logger.debug('building datasource')
-        datasource = PageAnalyzer(data)
-    
-        logger.debug('finding path')
-        path, distance = datasource.search(start="super", end="melee")
-        print(distance, [word.text for word in path])
-        
-        path, distance = datasource.search(start="be", end="good")
-        print(distance, [word.text for word in path])
-
-        phrase = 'Magic The Gathering'
-        for path, distance in datasource.search(phrase):
-            print(distance, [word.text for word in path])
-
-        phrase = 'Super Smash Bros Melee'
-        for path, distance in datasource.search(phrase):
-            print(distance, [word.text for word in path])        
-
-        anchor = 'Super'
-        neighbors = ['smash', 'bros', 'melee']
-        for path, distance in datasource.search(phrase, neighbors):
-            print(distance, [word.text for word in path])                
-
-        # print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
-        break
-'''
+    #print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
