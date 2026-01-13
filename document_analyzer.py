@@ -1,0 +1,51 @@
+import ocr
+import pdfutils
+from logger import logger
+from page_analyzer import PageAnalyzer
+import concurrent.futures
+
+
+class DocumentAnalyzer(object):
+    
+    def __init__(self, infile):
+        self.infile = infile
+        # self.pages = []
+        # c = 0
+        # for image in pdfutils.readPdfPagesAsArray(infile):
+        #     c += 1
+        #     logger.info(f"PAGE {c}")
+
+        #     logger.debug('reading page')
+        #     data = ocr.read(image)
+        
+        #     logger.debug('building page page analyzer')
+        #     page = PageAnalyzer(data)
+        #     self.pages.append(page)
+
+        images = [image for image in pdfutils.readPdfPagesAsArray(infile)]
+        self.pages = [page for page in _processPages(images)]
+
+
+    def search(self, *args, **kwargs):
+        n = len(self.pages)
+        for i in range(n):
+            page = self.pages[i]
+            for path, distance in page.search(*args, **kwargs):
+                yield {
+                    'page_number': i + 1,
+                    'path': path,
+                    'distance': distance
+                }
+
+
+def _processPage(image):
+    logger.debug('reading page')
+    data = ocr.read(image)
+    logger.debug('building page page analyzer')
+    return PageAnalyzer(data)
+
+
+def _processPages(images):
+    with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+        for page in executor.map(_processPage, images):
+            yield page
