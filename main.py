@@ -29,8 +29,12 @@ def display(image, data):
 
 
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
+    c = 0
     for image in pdfutils.readPdfPagesAsArray(infile):
+        c += 1
+        logger.info(f"PAGE {c}")
+
         logger.debug('reading page')
         data = ocr.read(image)
     
@@ -50,8 +54,12 @@ if __name__ == '__main__':
 
         phrase = 'Super Smash Bros Melee'
         for path, distance in datasource.search(phrase):
-            print(distance, [word.text for word in path])            
+            print(distance, [word.text for word in path])        
 
-        print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
+        anchor = 'Super'
+        neighbors = ['smash', 'bros', 'melee']
+        for path, distance in datasource.search(phrase, neighbors):
+            print(distance, [word.text for word in path])                
 
+        # print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
         break

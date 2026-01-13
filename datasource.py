@@ -12,27 +12,32 @@ from word import Word
 from logger import logger
 
 
+def getWords(data):
+    n_boxes = len(data['level'])
+    for i in range(n_boxes):
+        text = data['text'][i]
+        if not text:
+            continue            
+        confidence = data['conf'][i]
+        (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
+        xmin = x
+        ymin = y - h
+        xmax = x + w
+        ymax = y        
+        bbox = shapely.box(xmin, ymin, xmax, ymax)
+        yield Word(i+1, text, confidence, bbox)
+
+
 class Datasource(object):
     
     def __init__(self, data):
         self.words = {}
         self.occurrences = {}
 
+        # Add words to occurences list
         logger.debug('collecting words')
-        n_boxes = len(data['level'])
-        for i in range(n_boxes):
-            text = data['text'][i]
-            if not text:
-                continue            
-            confidence = data['conf'][i]
-            (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
-            xmin = x
-            ymin = y - h
-            xmax = x + w
-            ymax = y        
-            bbox = shapely.box(xmin, ymin, xmax, ymax)
-
-            word = self._addToken(text, confidence, bbox)
+        for word in getWords(data):
+            self.words[word.id] = word
             if word.text not in self.occurrences:
                 self.occurrences[word.text] = []
             self.occurrences[word.text].append(word.id)
@@ -55,11 +60,6 @@ class Datasource(object):
             for target in utils.getNeighbors(source, self.spatial_index, words_list, self.bounds):
                 distance = source.centroid.distance(target.centroid)
                 self.graph.add_edge(source.id, target.id, weight=distance)
-
-    def _addToken(self, text, confidence, bbox):
-        i = len(self.words.values()) + 1
-        self.words[i] = Word(i, text, confidence, bbox)
-        return self.words[i]
 
     def findShortestPath(self, start: str, end: str):
         # Check for spaces
@@ -99,13 +99,25 @@ class Datasource(object):
     def _getTokensFromText(self, text):
         return [utils.normalizeText(part) for part in text.split(' ')]
 
-    def findPhrase(self, text):
+    def _search(self, text):
         groups = []
+
+        tokens = [] 
         for token in self._getTokensFromText(text):
             ids = self._getTokenOccurances(token)
             if not ids:
                 return None
             groups.append(ids)
+            tokens.append(token)
+        cleaned = ' '.join(tokens)
+
+        if 0 == len(tokens):
+            return
+
+        if ' ' not in cleaned:
+            for group in groups:
+                yield [self.words[group[0]]], 0
+            return
 
         for combination in itertools.product(*groups):
             result = []
@@ -118,11 +130,24 @@ class Datasource(object):
                     result.append(path[0])
                 result.append(path[1])
                 total_distance += distance
-            if len(result) == len(combination):
+
+            # check result
+            found = ' '.join([item.text for item in result])
+            if cleaned == found:
                 yield result, total_distance
 
     def search(self, *args, **kwargs):
         if kwargs and kwargs['start'] and kwargs['end']:
             return self.findShortestPath(kwargs['start'], kwargs['end'])
-        elif args:
-            return [result for result in self.findPhrase(args[0])];
+        elif args and 1 == len(args):
+            return [result for result in self._search(args[0])]
+        elif args and 2 == len(args):
+            results = []
+            for begin, _ in self._search(args[0]):
+                for neighbor in args[1]:
+                    for end, _ in self._search(neighbor):
+                        print(end)
+                        path, distance = self._findShortestPath(begin[0].id, end[0].id)
+                        results.append((path, distance))
+            return results
+
