@@ -6,7 +6,8 @@ import cv2
 import ocr
 import pdfutils
 from logger import logger
-from datasource import Datasource
+# from page_analyzer import PageAnalyzer
+from document_analyzer import DocumentAnalyzer
 
 infile = 'MagicTheGathering_IsTuringComplete.pdf'
 
@@ -31,6 +32,31 @@ def display(image, data):
 
 if __name__ == '__main__':
     c = 0
+
+    analyzer = DocumentAnalyzer(infile)
+
+    # logger.debug('finding path')
+    # path, distance = analyzer.search(start="super", end="melee")
+    # print(distance, [word.text for word in path])
+    
+    # path, distance = analyzer.search(start="be", end="good")
+    # print(distance, [word.text for word in path])
+
+    phrase = 'Magic The Gathering'
+    for result in analyzer.search(phrase):
+        print(result['page_number'], result['distance'], [word.text for word in result['path']])
+
+    phrase = 'Super Smash Bros Melee'
+    for result in analyzer.search(phrase):
+        print(result['page_number'], result['distance'], [word.text for word in result['path']])
+
+    anchor = 'Super'
+    neighbors = ['smash', 'bros', 'melee']
+    for result in analyzer.search(phrase, neighbors):
+        print(result['page_number'], result['distance'], [word.text for word in result['path']])
+
+
+'''
     for image in pdfutils.readPdfPagesAsArray(infile):
         c += 1
         logger.info(f"PAGE {c}")
@@ -39,7 +65,7 @@ if __name__ == '__main__':
         data = ocr.read(image)
     
         logger.debug('building datasource')
-        datasource = Datasource(data)
+        datasource = PageAnalyzer(data)
     
         logger.debug('finding path')
         path, distance = datasource.search(start="super", end="melee")
@@ -63,3 +89,4 @@ if __name__ == '__main__':
 
         # print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
         break
+'''
