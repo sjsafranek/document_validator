@@ -1,4 +1,3 @@
-import ocr
 import pdfutils
 from logger import logger
 from page_analyzer import PageAnalyzer
@@ -39,13 +38,12 @@ class DocumentAnalyzer(object):
 
 
 def _processPage(image):
-    logger.debug('reading page')
-    data = ocr.read(image)
     logger.debug('building page page analyzer')
-    return PageAnalyzer(data)
+    return PageAnalyzer(image)
 
 
 def _processPages(images):
     with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
         for page in executor.map(_processPage, images):
+            # print(page.shape)
             yield page

@@ -7,6 +7,7 @@ from shapely.geometry import LineString
 from shapely.geometry import MultiPolygon
 from shapely.strtree import STRtree
 
+import ocr
 import utils
 from word import Word
 from logger import logger
@@ -30,7 +31,11 @@ def getWords(data):
 
 class PageAnalyzer(object):
     
-    def __init__(self, data):
+    def __init__(self, image):
+        logger.debug('running ocr on page')
+        data = ocr.read(image)
+
+        self.shape = image.shape
         self.words = {}
         self.occurrences = {}
 
