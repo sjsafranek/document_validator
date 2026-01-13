@@ -32,20 +32,18 @@ def display(image, data):
 if __name__ == '__main__':    
     for image in pdfutils.readPdfPagesAsArray(infile):
         logger.debug('reading page')
-        
-        data = ocr.parseImage(image)
+        data = ocr.read(image)
     
         logger.debug('building datasource')
         datasource = Datasource(data)
     
         logger.debug('finding path')
-
-        #phrase = 'Magic The Gathering'
-
-        path = datasource.findShortestPath("super", "melee")
-        print([word.text for word in path[0]])
+        path, distance = datasource.search(start="super", end="melee")
+        print(distance, [word.text for word in path])
         
-        # print(datasource.occurrences.keys())
+        phrase = 'Magic The Gathering'
+        for path, distance in datasource.search(phrase):
+            print(distance, [word.text for word in path])
 
         print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
 

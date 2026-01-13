@@ -1,4 +1,5 @@
 import re
+import itertools
 
 import networkx
 import shapely
@@ -7,7 +8,6 @@ from shapely.geometry import MultiPolygon
 from shapely.strtree import STRtree
 
 import utils
-# import geo
 from word import Word
 from logger import logger
 
@@ -62,7 +62,7 @@ class Datasource(object):
         return self.words[i]
 
     def findShortestPath(self, start: str, end: str):
-
+        # Check for spaces
         if ' ' in start:
             raise ValueError('TODO')
         if ' ' in end:
@@ -98,3 +98,39 @@ class Datasource(object):
             if match:
                 yield token
 
+    def _getTokenOccurances(self, text):
+        token = utils.normalizeText(text)
+        if token not in self.occurrences:
+            return None
+        return self.occurrences[token]
+
+    def _getTokensFromText(self, text):
+        return [utils.normalizeText(part) for part in text.split(' ')]
+
+    def findPhrase(self, text):
+        groups = []
+        for token in self._getTokensFromText(text):
+            ids = self._getTokenOccurances(token)
+            if not ids:
+                return None
+            groups.append(ids)
+
+        for combination in itertools.product(*groups):
+            result = []
+            total = 0
+            for pair in itertools.pairwise(combination):
+                path, distance = self._findShortestPath(pair[0], pair[1])
+                if 2 != len(path):
+                    break
+                if 0 == len(result):
+                    result.append(path[0])
+                result.append(path[1])
+                total += distance
+            if len(result) == len(combination):
+                yield result, distance
+
+    def search(self, *args, **kwargs):
+        if kwargs and kwargs['start'] and kwargs['end']:
+            return self.findShortestPath(kwargs['start'], kwargs['end'])
+        elif args:
+            return [result for result in self.findPhrase(args[0])];

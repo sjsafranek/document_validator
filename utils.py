@@ -6,6 +6,15 @@ from shapely.strtree import STRtree
 
 
 
+def normalizeText(text):
+    characters = [char.lower() for char in text if char.isalnum()]
+    if 0 == len(characters):
+        return ''
+    normalized = "".join(characters)
+    return normalized
+
+
+
 def getIntersections(line, spatial_index, words_list):
     """Get words that intersect with the line using spatial index."""
     # Query spatial index
@@ -46,15 +55,3 @@ def getNeighbors(source, spatial_index, words_list, bounds):
     if 0 != len(options):
         ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
         yield ordered[0]
-
-
-
-def normalizeText(text):
-    characters = [char.lower() for char in text if char.isalnum()]
-    # characters = [char.lower() for char in text if not char.isspace()]
-    if 0 == len(characters):
-        return ''
-    # if characters[-1] in '.,;!?':
-        # characters = characters[:-1]
-    normalized = "".join(characters)
-    return normalized

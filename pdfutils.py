@@ -17,5 +17,3 @@ def readPdfPagesAsImage(infile: str) -> PIL.Image.Image:
 def readPdfPagesAsArray(infile: str) -> numpy.array:
     for page in readPdfPages(infile):
         yield page.render(scale=2).to_numpy()
-
-
