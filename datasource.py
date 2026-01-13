@@ -67,14 +67,6 @@ class Datasource(object):
             raise ValueError('TODO')
         if ' ' in end:
             raise ValueError('TODO')
-
-        # start = utils.normalizeText(start)
-        # end = utils.normalizeText(end)
-        # if start not in self.occurrences:
-        #     return None
-        # if end not in self.occurrences:
-        #     return None
-
         paths = []
         for s in self._getTokenOccurances(start):
             for e in self._getTokenOccurances(end):
@@ -83,6 +75,7 @@ class Datasource(object):
             return [], None
         ordered = sorted(paths, key=lambda path: path[1])
         return ordered[0]
+        # return ordered
 
     def _findShortestPath(self, start: int, end: int):
         path = networkx.shortest_path(self.graph, source=start, target=end, weight="weight")
