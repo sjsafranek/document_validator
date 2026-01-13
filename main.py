@@ -45,6 +45,10 @@ if __name__ == '__main__':
         for path, distance in datasource.search(phrase):
             print(distance, [word.text for word in path])
 
+        phrase = 'Super Smash Bros Melee'
+        for path, distance in datasource.search(phrase):
+            print(distance, [word.text for word in path])            
+
         print([token for token in datasource.getTokensByPattern(r'\b(?:([Ss]u)|([Mm]a))\w*')])
 
         break

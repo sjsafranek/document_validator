@@ -117,7 +117,7 @@ class Datasource(object):
 
         for combination in itertools.product(*groups):
             result = []
-            total = 0
+            total_distance = 0
             for pair in itertools.pairwise(combination):
                 path, distance = self._findShortestPath(pair[0], pair[1])
                 if 2 != len(path):
@@ -125,9 +125,9 @@ class Datasource(object):
                 if 0 == len(result):
                     result.append(path[0])
                 result.append(path[1])
-                total += distance
+                total_distance += distance
             if len(result) == len(combination):
-                yield result, distance
+                yield result, total_distance
 
     def search(self, *args, **kwargs):
         if kwargs and kwargs['start'] and kwargs['end']:
