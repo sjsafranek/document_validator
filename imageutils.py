@@ -2,6 +2,14 @@ import PIL
 import numpy
 
 
+def read(infile):
+    # Open the image file
+    image = PIL.Image.open(infile)
+    
+    # Convert the Image object to a NumPy array
+    return numpy.array(image)
+
+
 def image2array(image: PIL.Image.Image) -> numpy.array:
     return numpy.array(image)
 

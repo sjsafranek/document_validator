@@ -1,28 +1,22 @@
+import concurrent.futures
+
 import pdfutils
+import imageutils
 from logger import logger
 from page_analyzer import PageAnalyzer
-import concurrent.futures
 
 
 class DocumentAnalyzer(object):
     
     def __init__(self, infile):
         self.infile = infile
-        # self.pages = []
-        # c = 0
-        # for image in pdfutils.readPdfPagesAsArray(infile):
-        #     c += 1
-        #     logger.info(f"PAGE {c}")
 
-        #     logger.debug('reading page')
-        #     data = ocr.read(image)
-        
-        #     logger.debug('building page page analyzer')
-        #     page = PageAnalyzer(data)
-        #     self.pages.append(page)
-
-        images = [image for image in pdfutils.readPdfPagesAsArray(infile)]
-        self.pages = [page for page in _processPages(images)]
+        if infile.endswith('.pdf'):
+            images = [image for image in pdfutils.readPdfPagesAsArray(infile)]
+            self.pages = [page for page in _processPages(images)]
+        else:
+            image = imageutils.read(infile)
+            self.pages = [_processPages(image)]
 
 
     def search(self, *args, **kwargs):

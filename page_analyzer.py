@@ -155,3 +155,11 @@ class PageAnalyzer(object):
                         results.append((path, distance))
             return results
 
+'''
+
+distance threshold
+ - font size --> bbox size
+ - page width
+
+
+'''

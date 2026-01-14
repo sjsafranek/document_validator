@@ -1,12 +1,9 @@
 # import itertools
 import re
 
-import cv2
-
 import ocr
 import pdfutils
 from logger import logger
-# from page_analyzer import PageAnalyzer
 from document_analyzer import DocumentAnalyzer
 
 infile = 'MagicTheGathering_IsTuringComplete.pdf'
@@ -16,31 +13,10 @@ infile = 'MagicTheGathering_IsTuringComplete.pdf'
 # DISTANCE_THRESHOLD = width * 0.25
 
 
-def display(image, data):
-    n_boxes = len(data['level'])
-    for i in range(n_boxes):
-        text = data['text'][i]
-        confidence = data['conf'][i]
-        if not text:
-            continue
-        (x, y, w, h) = (data['left'][i], data['top'][i], data['width'][i], data['height'][i])
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 1)
-    cv2.imshow('img', image)
-    cv2.waitKey(0)
-
-
-
 if __name__ == '__main__':
     c = 0
 
     analyzer = DocumentAnalyzer(infile)
-
-    # logger.debug('finding path')
-    # path, distance = analyzer.search(start="super", end="melee")
-    # print(distance, [word.text for word in path])
-    
-    # path, distance = analyzer.search(start="be", end="good")
-    # print(distance, [word.text for word in path])
 
     phrase = 'Magic The Gathering'
     for result in analyzer.search(phrase):
