@@ -103,16 +103,7 @@ class PageAnalyzer(object):
             elif re.match(pattern, word.text):
                 yield word
             elif re.match(pattern, word.raw):
-                yield word                
-        # for token in self.occurrences:
-        #     if token == pattern:
-        #         for token_id in self.occurrences[token]:
-        #             yield self.getWordById(token_id)
-        #         continue
-        #     match = re.match(pattern, token)
-        #     if match:
-        #         for token_id in self.occurrences[token]:
-        #             yield self.getWordById(token_id)
+                yield word
 
     def _getTokenOccurances(self, text):
         token = utils.normalizeText(text)
@@ -200,13 +191,6 @@ class PageAnalyzer(object):
                 for end in ends:
                     path, distance = self._findShortestPath(begin[0].id, end[0].id)
                     results.append((path, distance))
-
-            # for begin in begins:
-            #     print(args[0], args[1])
-            #     for neighbor in args[1]:
-            #         for end, _ in self._search(neighbor):
-            #             path, distance = self._findShortestPath(begin[0].id, end[0].id)
-            #             results.append((path, distance))
             return results
 
 '''
