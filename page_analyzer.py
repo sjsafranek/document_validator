@@ -84,16 +84,26 @@ class PageAnalyzer(object):
 
     def _findShortestPath(self, start: int, end: int):
         path = networkx.shortest_path(self.graph, source=start, target=end, weight="weight")
-        words = [self.words[wordId] for wordId in path]
+        words = [self.getWordById(token_id) for token_id in path]
         line = LineString([word.centroid for word in words])
         distance = line.length
         return words, distance
 
+    def getWordById(self, token_id):
+        if token_id in self.words:
+            return self.words[token_id]
+        return None
+
     def getTokensByPattern(self, pattern):
         for token in self.occurrences:
+            if token == pattern:
+                for token_id in self.occurrences[token]:
+                    yield self.getWordById(token_id)
+                continue
             match = re.match(pattern, token)
             if match:
-                yield token
+                for token_id in self.occurrences[token]:
+                    yield self.getWordById(token_id)
 
     def _getTokenOccurances(self, text):
         token = utils.normalizeText(text)
@@ -105,8 +115,8 @@ class PageAnalyzer(object):
         return [utils.normalizeText(part) for part in text.split(' ')]
 
     def _search(self, text):
-        groups = []
 
+        groups = []
         tokens = [] 
         for token in self._getTokensFromText(text):
             ids = self._getTokenOccurances(token)
@@ -116,12 +126,22 @@ class PageAnalyzer(object):
             tokens.append(token)
         cleaned = ' '.join(tokens)
 
+        # groups = []
+        # tokens = []
+        # for token in self._getTokensFromText(text):
+        #     words = [word for word in self.getTokensByPattern(token)]
+        #     if 0 == len(words):
+        #         return None
+        #     groups.append([word.id for word in words])
+        #     tokens += [word.text for word in words]
+        # cleaned = ' '.join(tokens)
+
         if 0 == len(tokens):
             return
 
         if ' ' not in cleaned:
             for group in groups:
-                yield [self.words[group[0]]], 0
+                yield [self.getWordById(group[0])], 0
             return
 
         for combination in itertools.product(*groups):
@@ -148,11 +168,36 @@ class PageAnalyzer(object):
             return [result for result in self._search(args[0])]
         elif args and 2 == len(args):
             results = []
-            for begin, _ in self._search(args[0]):
-                for neighbor in args[1]:
-                    for end, _ in self._search(neighbor):
-                        path, distance = self._findShortestPath(begin[0].id, end[0].id)
-                        results.append((path, distance))
+            
+            begins = []
+            if type(args[0]) is Word:
+                begins = [(args[0],)]
+            elif type(args[0]) is str:
+                begins = [item for item, _ in self._search(args[0])]
+            
+            ends = []
+            if type(args[1]) is Word:
+                ends = [(args[1],)]
+            elif type(args[1]) is str:
+                ends = [item[0] for item, _ in self._search(args[1])]
+            elif type(args[1]) is list:
+                for item in args[1]:
+                    if type(item) is Word:
+                        ends.append((item,))
+                    elif type(item) is str:
+                        ends += [item for item, _ in self._search(item)]
+
+            for begin in begins:
+                for end in ends:
+                    path, distance = self._findShortestPath(begin[0].id, end[0].id)
+                    results.append((path, distance))
+
+            # for begin in begins:
+            #     print(args[0], args[1])
+            #     for neighbor in args[1]:
+            #         for end, _ in self._search(neighbor):
+            #             path, distance = self._findShortestPath(begin[0].id, end[0].id)
+            #             results.append((path, distance))
             return results
 
 '''

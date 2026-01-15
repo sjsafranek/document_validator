@@ -16,7 +16,7 @@ class DocumentAnalyzer(object):
             self.pages = [page for page in _processPages(images)]
         else:
             image = imageutils.read(infile)
-            self.pages = [_processPages(image)]
+            self.pages = [_processPage(image)]
 
 
     def search(self, *args, **kwargs):
