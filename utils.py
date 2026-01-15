@@ -13,6 +13,10 @@ def normalizeText(text):
     normalized = "".join(characters)
     return normalized
 
+# def normalizeText(text):
+    # normalized = text.lower()
+    # return normalized
+
 
 
 def getIntersections(line, spatial_index, words_list):

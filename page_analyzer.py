@@ -95,15 +95,24 @@ class PageAnalyzer(object):
         return None
 
     def getTokensByPattern(self, pattern):
-        for token in self.occurrences:
-            if token == pattern:
-                for token_id in self.occurrences[token]:
-                    yield self.getWordById(token_id)
-                continue
-            match = re.match(pattern, token)
-            if match:
-                for token_id in self.occurrences[token]:
-                    yield self.getWordById(token_id)
+        for word in self.words.values():
+            if word.text == pattern:
+                yield word
+            elif word.raw == pattern:
+                yield word
+            elif re.match(pattern, word.text):
+                yield word
+            elif re.match(pattern, word.raw):
+                yield word                
+        # for token in self.occurrences:
+        #     if token == pattern:
+        #         for token_id in self.occurrences[token]:
+        #             yield self.getWordById(token_id)
+        #         continue
+        #     match = re.match(pattern, token)
+        #     if match:
+        #         for token_id in self.occurrences[token]:
+        #             yield self.getWordById(token_id)
 
     def _getTokenOccurances(self, text):
         token = utils.normalizeText(text)

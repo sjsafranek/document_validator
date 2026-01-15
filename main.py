@@ -1,5 +1,6 @@
 # import itertools
 import re
+import statistics
 
 import ocr
 import pdfutils
@@ -31,8 +32,8 @@ if __name__ == '__main__':
         paths = sorted(paths, key=lambda path: path[1])
         for path in paths:
             if 3 == len(path[0]):
-                print([item.raw for item in path[0]])
-                print([item.centroid for item in path[0]])
+                if 5 >= statistics.pstdev([item.centroid.y for item in path[0]]):
+                    print([item.raw for item in path[0]])
 
     for path in page.search('shipping charges'):
         start = path[0][0]
@@ -41,18 +42,18 @@ if __name__ == '__main__':
         paths = sorted(paths, key=lambda path: path[1])
         for path in paths:
             if 3 == len(path[0]):
-                print([item.raw for item in path[0]])
-                print([item.centroid for item in path[0]])
+                if 5 >= statistics.pstdev([item.centroid.y for item in path[0]]):
+                    print([item.raw for item in path[0]])
 
     for path in page.search('insurance'):
-        start = path[0][-1]
+        start = path[0][0]
         ends = [end for end in page.getTokensByPattern(r"^[-+]?\d+$")]
         paths = [item for item in page.search(start, ends)]
         paths = sorted(paths, key=lambda path: path[1])
         print([item.raw for item in paths[0][0]])
 
-    for path in page.search('vat'):
-        start = path[0][-1]
+    for path in page.search('tax'):
+        start = path[0][0]
         ends = [end for end in page.getTokensByPattern(r"^[-+]?\d+$")]
         paths = [item for item in page.search(start, ends)]
         paths = sorted(paths, key=lambda path: path[1])
