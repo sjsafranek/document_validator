@@ -1,6 +1,6 @@
 import cv2
 import numpy
-import pypdfium2
+# import pypdfium2
 import pytesseract
 from pytesseract import Output
 

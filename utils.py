@@ -13,10 +13,6 @@ def normalizeText(text):
     normalized = "".join(characters)
     return normalized
 
-# def normalizeText(text):
-    # normalized = text.lower()
-    # return normalized
-
 
 
 def getIntersections(line, spatial_index, words_list):
@@ -59,3 +55,4 @@ def getNeighbors(source, spatial_index, words_list, bounds):
     if 0 != len(options):
         ordered = sorted(options, key=lambda target: shapely.distance(source.centroid, target.centroid))
         yield ordered[0]
+

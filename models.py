@@ -21,3 +21,16 @@ class Word(object):
     def __str__(self):
         return f'{self.text} ({self.id})'
 
+
+
+class SearchResult(object):
+
+    def __init__(self, page_number: int, path: list[Word], distance: float):
+        self.page_number = page_number
+        self.path = path
+        self.distance = distance
+
+    @property
+    def text(self):
+        return ' '.join([word.raw for word in self.path])
+

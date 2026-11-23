@@ -1,4 +1,5 @@
 import re
+import logging
 import itertools
 
 import networkx
@@ -9,8 +10,10 @@ from shapely.strtree import STRtree
 
 import ocr
 import utils
-from word import Word
-from logger import logger
+import levenshtein
+from models import Word
+
+logger = logging.getLogger(__name__)
 
 
 def getWords(data):
@@ -65,16 +68,17 @@ class PageAnalyzer(object):
             for target in utils.getNeighbors(source, self.spatial_index, words_list, self.bounds):
                 distance = source.centroid.distance(target.centroid)
                 self.graph.add_edge(source.id, target.id, weight=distance)
+                self.graph.add_edge(target.id, source.id, weight=distance)  # Optional
 
-    def findShortestPath(self, start: str, end: str):
+    def findShortestPath(self, start: str, end: str, **kwargs):
         # Check for spaces
         if ' ' in start:
             raise ValueError('TODO')
         if ' ' in end:
             raise ValueError('TODO')
         paths = []
-        for s in self._getTokenOccurances(start):
-            for e in self._getTokenOccurances(end):
+        for s in self._getTokenOccurances(start, **kwargs):
+            for e in self._getTokenOccurances(end, **kwargs):
                 paths.append(self._findShortestPath(s, e))
         if 0 == len(paths):
             return [], None
@@ -105,36 +109,34 @@ class PageAnalyzer(object):
             elif re.match(pattern, word.raw):
                 yield word
 
-    def _getTokenOccurances(self, text):
+    def _getTokenOccurances(self, text, fuzzy_distance_threshold=0):
         token = utils.normalizeText(text)
-        if token not in self.occurrences:
-            return []
-        return self.occurrences[token]
+        
+        # Just do direct lookup if needed 
+        if 0 == fuzzy_distance_threshold:
+            return self.occurrences.get(token, [])
+
+        # Do fuzzy search
+        results = []
+        for key in self.occurrences:
+            if fuzzy_distance_threshold >= levenshtein.distance(key, token):
+                results += self.occurrences[token]
+        return results
 
     def _getTokensFromText(self, text):
         return [utils.normalizeText(part) for part in text.split(' ')]
 
-    def _search(self, text):
+    def _search(self, text, **kwargs):
 
         groups = []
         tokens = [] 
         for token in self._getTokensFromText(text):
-            ids = self._getTokenOccurances(token)
+            ids = self._getTokenOccurances(token, **kwargs)
             if not ids:
                 return None
             groups.append(ids)
             tokens.append(token)
         cleaned = ' '.join(tokens)
-
-        # groups = []
-        # tokens = []
-        # for token in self._getTokensFromText(text):
-        #     words = [word for word in self.getTokensByPattern(token)]
-        #     if 0 == len(words):
-        #         return None
-        #     groups.append([word.id for word in words])
-        #     tokens += [word.text for word in words]
-        # cleaned = ' '.join(tokens)
 
         if 0 == len(tokens):
             return
@@ -162,10 +164,17 @@ class PageAnalyzer(object):
                 yield result, total_distance
 
     def search(self, *args, **kwargs):
-        if kwargs and kwargs['start'] and kwargs['end']:
-            return self.findShortestPath(kwargs['start'], kwargs['end'])
+        
+        if kwargs and ('start' in kwargs) and ('end' in kwargs):
+            return self.findShortestPath(kwargs['start'], kwargs['end'], **kwargs)
+        
         elif args and 1 == len(args):
-            return [result for result in self._search(args[0])]
+            # Filter out any duplicate results
+            results = {}
+            for result in self._search(args[0], **kwargs):
+                results['|'.join([str(word.id) for word in result[0]])] = result
+            return list(results.values())
+
         elif args and 2 == len(args):
             results = []
             
@@ -173,31 +182,23 @@ class PageAnalyzer(object):
             if type(args[0]) is Word:
                 begins = [(args[0],)]
             elif type(args[0]) is str:
-                begins = [item for item, _ in self._search(args[0])]
+                begins = [item for item, _ in self._search(args[0], **kwargs)]
             
             ends = []
             if type(args[1]) is Word:
                 ends = [(args[1],)]
             elif type(args[1]) is str:
-                ends = [item[0] for item, _ in self._search(args[1])]
+                ends = [item[0] for item, _ in self._search(args[1], **kwargs)]
             elif type(args[1]) is list:
                 for item in args[1]:
                     if type(item) is Word:
                         ends.append((item,))
                     elif type(item) is str:
-                        ends += [item for item, _ in self._search(item)]
+                        ends += [item for item, _ in self._search(item, **kwargs)]
 
             for begin in begins:
                 for end in ends:
+                    print(begin[0].id, end[0].id)
                     path, distance = self._findShortestPath(begin[0].id, end[0].id)
                     results.append((path, distance))
             return results
-
-'''
-
-distance threshold
- - font size --> bbox size
- - page width
-
-
-'''
