@@ -1,3 +1,29 @@
+
+
+Using Dijkstra and Weighted Graphs over OCR Results
+
+
+IronOCR (Tesseract) (https://ironsoftware.com/ocr/csharp)
+Pytesseract (https://pypi.org/project/pytesseract/)
+OCRS (https://github.com/robertknight/ocrs)
+
+Zonal OCR
+I have had great results using zonal/template OCR methodology for document validation processes. It tends to be faster and it keeps results from data extraction fairly clean due to the targeted nature of the zonal process. The main downsides are dealing with skewed scans, and the ongoing template maintenance as document layouts change. Perhaps the biggest limitation to this OCR technique, is how to deal with documents coming from 3rd and 4th parties, whose layouts vary wildly, yet still contain the same basic information.
+
+
+
+
+however this doesn’t help with documents with varying or inconsistent layout/formatting.
+
+
+OCR results are words within 2 dimensional space, similar to a road network.
+
+
+
+
+
+
+
 # document_validator
 Use OCR to read PDF files
 
