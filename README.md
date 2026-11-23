@@ -20,3 +20,22 @@ py -3.15 main.py data/test_invoice.png
 py -3.15 main.py data/MagicTheGathering_IsTuringComplete.pdf
 
 
+
+## Setup
+```bash
+py -3.15 -m venv venv
+source venv/Scripts/activate
+python -m pip install --upgrade pip setuptools wheel
+
+pip install scikit-image --only-binary :all:
+
+pip install easyocr
+```
+
+
+```bash
+pip install numpy
+pip install opencv-python
+pip install pypdfium2
+pip install pytesseract
+```
